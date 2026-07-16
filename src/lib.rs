@@ -28,6 +28,6 @@ pub use types::{
 };
 // Re-export vision processing components
 pub use vision::{
-    InklingImageProcessor, LlavaNextProcessor, LlavaProcessor, PreProcessorConfig,
+    InklingImageProcessor, KimiK3Processor, LlavaNextProcessor, LlavaProcessor, PreProcessorConfig,
     VisionPreProcessor, VisionProcessorRegistry,
 };

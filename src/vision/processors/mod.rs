@@ -19,7 +19,9 @@
 //! - **MiniMax-M3** (`minimax_m3`): Qwen2-VL patchify with MiniMax smart resize
 
 pub mod inkling;
+pub(crate) mod kimi_base;
 pub mod kimi_k25;
+pub mod kimi_k3;
 pub mod llama4_vision;
 pub mod llava;
 pub mod minimax_m3;
@@ -33,6 +35,7 @@ pub mod qwen_vl_base;
 
 pub use inkling::InklingImageProcessor;
 pub use kimi_k25::KimiK25Processor;
+pub use kimi_k3::KimiK3Processor;
 pub use llama4_vision::Llama4VisionProcessor;
 pub use llava::{ImageAspectRatio, LlavaNextProcessor, LlavaProcessor};
 pub use minimax_m3::MiniMaxM3Processor;

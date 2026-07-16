@@ -1,5 +1,6 @@
 mod inkling;
 mod kimi_k25;
+mod kimi_k3;
 mod llama4;
 mod llava;
 mod minimax_m3;
@@ -12,6 +13,7 @@ mod traits;
 
 use inkling::InklingSpec;
 use kimi_k25::KimiK25VisionSpec;
+use kimi_k3::KimiK3VisionSpec;
 use llama4::Llama4Spec;
 use llava::{LlavaNextSpec, LlavaSpec};
 use minimax_m3::MiniMaxM3VisionSpec;
@@ -34,6 +36,7 @@ impl ModelRegistry {
     pub fn new() -> Self {
         Self {
             specs: vec![
+                LazySpec::new(|| Box::new(KimiK3VisionSpec)),
                 LazySpec::new(|| Box::new(KimiK25VisionSpec)),
                 LazySpec::new(|| Box::new(Llama4Spec)),
                 // LlavaNext must be registered before Llava so "llava_next" model_type matches first.

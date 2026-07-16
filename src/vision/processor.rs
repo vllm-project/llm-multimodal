@@ -329,6 +329,14 @@ impl VisionProcessorRegistry {
             "kimi_k2",
             Box::new(super::processors::KimiK25Processor::new()),
         );
+        registry.register(
+            "kimi-k3",
+            Box::new(super::processors::KimiK3Processor::new()),
+        );
+        registry.register(
+            "kimi_k3",
+            Box::new(super::processors::KimiK3Processor::new()),
+        );
 
         // Register Inkling vision.
         registry.register(
