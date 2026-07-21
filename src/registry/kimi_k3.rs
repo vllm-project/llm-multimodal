@@ -11,6 +11,8 @@ use crate::{
 pub(super) struct KimiK3VisionSpec;
 
 impl KimiK3VisionSpec {
+    const PROMPT_MARKER: &str = "<|media_pad|>";
+
     fn pad_token_id(metadata: &ModelMetadata) -> RegistryResult<TokenId> {
         metadata
             .config_u32(&["media_placeholder_token_id"])
@@ -18,15 +20,6 @@ impl KimiK3VisionSpec {
             .ok_or_else(|| ModelRegistryError::MissingConfigField {
                 field: "media_placeholder_token_id".to_string(),
             })
-    }
-
-    fn placeholder(metadata: &ModelMetadata) -> String {
-        metadata
-            .config
-            .get("image_placeholder")
-            .and_then(Value::as_str)
-            .unwrap_or("<|kimi_image_placeholder|>")
-            .to_string()
     }
 
     fn encode_text(metadata: &ModelMetadata, text: &str) -> Vec<TokenId> {
@@ -50,8 +43,8 @@ impl ModelProcessorSpec for KimiK3VisionSpec {
             .is_some_and(|model_type| model_type == "kimi_k3")
             || metadata.model_id.to_ascii_lowercase().contains("kimi-k3")
     }
-    fn placeholder_token(&self, metadata: &ModelMetadata) -> RegistryResult<String> {
-        Ok(Self::placeholder(metadata))
+    fn placeholder_token(&self, _metadata: &ModelMetadata) -> RegistryResult<String> {
+        Ok(Self::PROMPT_MARKER.to_string())
     }
     fn placeholder_token_id(&self, metadata: &ModelMetadata) -> RegistryResult<TokenId> {
         Self::pad_token_id(metadata)
@@ -71,7 +64,7 @@ impl ModelProcessorSpec for KimiK3VisionSpec {
         preprocessed: &PreprocessedEncoderInputs,
     ) -> RegistryResult<Vec<PromptReplacement>> {
         let pad = Self::pad_token_id(metadata)?;
-        let placeholder = Self::placeholder(metadata);
+        let placeholder = self.placeholder_token(metadata)?;
         Ok(preprocessed
             .item_sizes
             .iter()
