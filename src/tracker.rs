@@ -22,6 +22,7 @@ pub struct AsyncMultiModalTracker {
     media_connector: Arc<MediaConnector>,
     pending: HashMap<Modality, Vec<PendingTask>>,
     uuids: MultiModalUUIDs,
+    video_config: VideoFetchConfig,
 }
 
 impl AsyncMultiModalTracker {
@@ -30,7 +31,19 @@ impl AsyncMultiModalTracker {
             media_connector,
             pending: HashMap::new(),
             uuids: HashMap::new(),
+            video_config: VideoFetchConfig::default(),
         }
+    }
+
+    /// Override the video decode settings used for every clip this tracker
+    /// fetches.
+    ///
+    /// Callers that accept per-request media options (frame count, sampling
+    /// rate) need this, since the tracker otherwise always decodes with
+    /// [`VideoFetchConfig::default`].
+    pub fn with_video_config(mut self, video_config: VideoFetchConfig) -> Self {
+        self.video_config = video_config;
+        self
     }
 
     pub fn push_part(&mut self, part: MediaContentPart) -> MultiModalResult<()> {
@@ -127,10 +140,9 @@ impl AsyncMultiModalTracker {
         self.uuids.entry(modality).or_default().push(uuid);
 
         let connector = Arc::clone(&self.media_connector);
+        let video_config = self.video_config;
         let handle = tokio::spawn(async move {
-            let clip = connector
-                .fetch_video(source, VideoFetchConfig::default())
-                .await?;
+            let clip = connector.fetch_video(source, video_config).await?;
             Ok(TrackedMedia::Video(clip))
         });
 
@@ -148,5 +160,37 @@ impl AsyncMultiModalTracker {
         });
 
         self.pending.entry(modality).or_default().push(handle);
+    }
+}
+
+#[cfg(test)]
+mod video_config_tests {
+    use super::*;
+
+    #[test]
+    fn tracker_defaults_to_the_library_video_config() {
+        let connector =
+            Arc::new(MediaConnector::new(reqwest::Client::new(), Default::default()).unwrap());
+        let tracker = AsyncMultiModalTracker::new(connector);
+        let default = VideoFetchConfig::default();
+
+        assert_eq!(tracker.video_config.min_frames, default.min_frames);
+        assert_eq!(tracker.video_config.max_frames, default.max_frames);
+        assert_eq!(tracker.video_config.sample_fps, default.sample_fps);
+    }
+
+    #[test]
+    fn with_video_config_overrides_every_field() {
+        let connector =
+            Arc::new(MediaConnector::new(reqwest::Client::new(), Default::default()).unwrap());
+        let tracker = AsyncMultiModalTracker::new(connector).with_video_config(VideoFetchConfig {
+            min_frames: 2,
+            max_frames: 8,
+            sample_fps: 0.5,
+        });
+
+        assert_eq!(tracker.video_config.min_frames, 2);
+        assert_eq!(tracker.video_config.max_frames, 8);
+        assert_eq!(tracker.video_config.sample_fps, 0.5);
     }
 }
